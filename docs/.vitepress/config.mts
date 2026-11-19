@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 import container from 'markdown-it-container'
 import { cjkPunctPlugin } from './markdown-cjk'
+import { DIGEST, GATE_ATTR, SESSION_KEY } from './theme/auth/gate'
 
 /* ============================================================================
  *  YJlab 实验室维基 —— 站点配置
@@ -97,6 +98,20 @@ export default defineConfig({
       {},
       `(function(){try{var t=localStorage.getItem('yjlab-wiki-theme');` +
         `if(t&&t!=='wiki'){document.documentElement.setAttribute('data-wiki-theme',t)}}catch(e){}})()`,
+    ],
+    /*
+     * 访问门槛：在**页面绘制前**判断本会话是否已经答过题，把 <html data-yjlab-gate>
+     * 设成 'locked' 或 'open'。auth-gate.css 靠这个属性藏正文、藏遮罩，
+     * 所以既不会先闪一下正文（等于白送），也不会让答过的人再看见一帧门。
+     *
+     * 答案的密文与存储键都从 theme/auth/gate.ts 引入，不在这里重复写。
+     */
+    [
+      'script',
+      {},
+      `(function(){var s='${GATE_ATTR}';try{document.documentElement.setAttribute(` +
+        `s,sessionStorage.getItem('${SESSION_KEY}')==='${DIGEST}'?'open':'locked')}` +
+        `catch(e){document.documentElement.setAttribute(s,'locked')}})()`,
     ],
   ],
 

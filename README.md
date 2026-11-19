@@ -34,6 +34,7 @@ npm run build    # 产物在 docs/.vitepress/dist/
 | 404 页 | `docs/.vitepress/theme/NotFound.vue` |
 | 侧栏搜索 | `docs/.vitepress/theme/WikiSearch.vue` |
 | 主题（皮肤） | `docs/.vitepress/theme/themes.ts` 注册，每个主题一个 css |
+| 开门页（访问门槛）的问题与答案密文 | `docs/.vitepress/theme/auth/gate.ts`，见下文「访问门槛」 |
 
 `docs/` 下按栏目分目录：`chronicle/` 世代编年史、`groups/` 组别、`tools/` 工具介绍、
 `help/` 帮助；`public/` 放图片与 favicon；`scripts/` 是构建与调试脚本。
@@ -115,15 +116,70 @@ XP_BASE=/YJlabwiki/ python3 scripts/xp-shot.py <路由> <输出名> [要执行�
 拍到客户端渲染结果），也可以注入 JS 模拟点击；`XP_DELAY` 控制慢图延时。
 跑完记得 `npm run build` 把注入清掉（dist 本来就在 `.gitignore` 里）。
 
+## 访问门槛（进门先答题）
+
+打开任何页面先看到一张门：「实验室里出现次数最多的人名是谁？」，写中文姓名，
+答对了才显示正文。本会话内有效（关掉浏览器要重新答）。连错 2 次锁 5 分钟。
+
+代码只有四个文件：
+
+| 文件 | 作用 |
+| --- | --- |
+| `theme/auth/gate.ts` | 问题、答案的 **SHA-256 密文**、sessionStorage 放行标记、错次/锁定计数 |
+| `theme/auth/AuthGate.vue` | 那张门本身（输入框、回车提交、倒计时） |
+| `theme/auth/auth-gate.css` | 门的样式，外加「锁着时藏正文 / 放行后不画门」两条规则 |
+| `Layout.vue` + `config.mts` | 门挂在 Layout 上；`config.mts` 的 `head` 里那段内联脚本在**页面绘制前**判断放行状态 |
+
+存储键：`yjlab-gate-pass`（sessionStorage，值就是密文本身）、
+`yjlab-gate-fail`（localStorage，存错次和锁定到期时间）。
+
+### 答案放在哪、怎么改
+
+**仓库里只有密文。** `gate.ts` 里的 `DIGEST` 是答案的 SHA-256，答案明文不进代码、
+不进注释、不进 README、**不进 commit message 和分支名** —— 那些也都是 git 历史。
+
+要换答案，按下面的命令重新算（把 `答案` 换成真实姓名）：
+
+```bash
+node -e "const c=require('crypto');
+  console.log(c.createHash('sha256')
+    .update(process.argv[1].normalize('NFKC').trim())
+    .digest('hex'))" 答案
+```
+
+把输出填进 `gate.ts` 的 `DIGEST` 即可。校验时会先做 NFKC + 去首尾空白，
+所以全角/半角、复制粘贴带尾随空格都不影响；**汉字必须精确**，不认拼音。
+
+### ⚠️ 它只是门帘，不是鉴权
+
+- 站点是预渲染的静态站，**每页正文本来就在 `dist/*.html` 里明文**，`curl` 一下、
+  右键看源码、翻公开仓库的 `.md`、或者读 `docs/public/search-index.json`
+  都能绕过这道门。它治的是「随手点进来的人」。
+- 答案空间是实验室名单（几十个词），SHA-256 可被毫秒级字典爆破。这里没有
+  再叠 PBKDF2 迭代 —— 挡不住，只会让每次输入变慢、并让人误以为它安全。
+- 真要保密，只有三条路：仓库转私有、加后端登录、或用 Cloudflare Access 之类
+  有服务端的方案。
+- `404.html` 不走 `Layout`，所以「页面不存在」那页没有门（里面也没有正经内容）。
+
+另外注意：Web Crypto 只在 **https 或 localhost** 下可用，所以本地用 `npm run dev`
+（或 `127.0.0.1`）测试；用 `http://192.168.x.x` 打开会提示「这个浏览器算不了哈希」。
+
 ## 改代码前必读
 
-三处**删了会静默出问题**的地方：
+四处**删了会静默出问题**的地方：
 
 1. **`docs/.vitepress/theme/index.ts` 必须导出 `NotFound`。** VitePress 内部执行的是
    `createRouter(loadPageModule, Theme.NotFound)`；缺了它，访问不存在的地址会**整页空白且控制台不报错**。
 2. **`docs/.vitepress/markdown-cjk.ts` 不能删。** CommonMark 规定 `**` 左边紧挨标点就不能闭合，
    中文写作里 `**注意：**请勿…` 会原样吐出星号。这个插件在解析前后做私用区字符加脱壳来修掉它。
 3. **搜索索引在构建前生成。** `npm run build` 已包含 `npm run index`；如果只跑 `vitepress build`，站内搜索会没有数据。
+4. **开门页的防闪现是三处联动的**：`config.mts` 的 `head` 内联脚本打上
+   `<html data-yjlab-gate="locked|open">`，`auth-gate.css` 据它隐藏 `.wiki-shell`，
+   `Layout.vue` 在答对后把属性改成 `open`。删掉内联脚本 → 每次都会先闪一下正文；
+   删掉 CSS 那两条规则 → 门在，但正文在门底下可见。
+   也**不要**用 `v-if="locked"` 把 `<Content />` 摘掉：XP 主题每个窗口是 fetch 那一页的
+   静态 HTML 再抠 `.wiki-body` 的，正文不在 HTML 里 XP 就全空了。
+
 
 ## 部署
 
@@ -144,4 +200,6 @@ push 到 `main` 即触发，约 1 分钟上线。进度看仓库的 Actions 页�
 
 - 用**实验室公共账号**管仓库，不要挂在个人账号上
 - 仓库至少留 2 个管理员，凭据存进组内共享的密码库
-- 站点内容**对全网公开** —— GitHub Pages 免费版无法加登录，不要往里写隐私与保密材料
+- 站点内容**对全网公开** —— GitHub Pages 免费版无法加登录，不要往里写隐私与保密材料。
+  现在有一道进门答题的门（见上文「访问门槛」），但那只是让顺手点开的人答个题，
+  **不是鉴权**，别把它当保险箱。

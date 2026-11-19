@@ -1,0 +1,170 @@
+/* ============================================================================
+ *  开门页（访问门槛）的样式
+ *
+ *  两个关键点，都靠 <html data-yjlab-gate="…"> 这个属性：
+ *
+ *    locked —— 由 config.mts head 里的内联脚本在**页面绘制前**打上，
+ *              用来把正文藏掉。否则 VitePress 先渲染出正文、Vue 挂载后
+ *              才盖上遮罩，会闪一下内容（等于白送）。
+ *    open   —— 本会话已经答过，直接放行，连门都不画。
+ *
+ *  Layout 在答对后会把属性改成 open；刷新时由内联脚本重新判断。
+ * ==========================================================================*/
+
+/* 锁着的时候：正文一个字都不显示（仍在 HTML 里，只是不画） */
+html[data-yjlab-gate='locked'] .wiki-page-base,
+html[data-yjlab-gate='locked'] .wiki-shell,
+html[data-yjlab-gate='locked'] .xp-desktop {
+  display: none !important;
+}
+
+/* 已经放行：门根本不出现，避免答过的人每次刷新看见一帧遮罩 */
+html[data-yjlab-gate='open'] .auth-gate {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------ 遮罩 */
+
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+  background: var(--wiki-bg, #f6f6f6);
+  color: var(--wiki-text, #202122);
+  font-family: var(--wiki-sans, sans-serif);
+}
+
+.auth-gate__card {
+  width: 100%;
+  max-width: 460px;
+  padding: 28px 30px 22px;
+  background: #fff;
+  border: 1px solid var(--wiki-border-faint, #c8ccd1);
+  border-left: 4px solid var(--wiki-border-blue, #a7d7f9);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 8%);
+}
+
+.auth-gate__logo {
+  font-family: var(--wiki-serif, Georgia, serif);
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: 0.5px;
+}
+
+.auth-gate__logo-red {
+  color: #c00;
+}
+
+.auth-gate__tagline {
+  margin-left: 8px;
+  font-family: var(--wiki-sans, sans-serif);
+  font-size: 13px;
+  color: var(--wiki-text-subtle, #54595d);
+}
+
+.auth-gate__question {
+  margin: 22px 0 6px;
+  padding-bottom: 6px;
+  font-family: var(--wiki-serif, Georgia, serif);
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1.5;
+  border-bottom: 1px solid var(--wiki-border-blue, #a7d7f9);
+}
+
+.auth-gate__hint {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--wiki-text-subtle, #54595d);
+}
+
+.auth-gate__form {
+  margin: 0;
+}
+
+.auth-gate__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--wiki-text, #202122);
+}
+
+.auth-gate__row {
+  display: flex;
+  gap: 8px;
+}
+
+.auth-gate__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 9px;
+  font-family: inherit;
+  font-size: 16px; /* 16px 以上 iOS 不放大 */
+  color: inherit;
+  background: #fff;
+  border: 1px solid var(--wiki-border, #a2a9b1);
+  border-radius: 2px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.auth-gate__input:focus {
+  border-color: var(--wiki-link, #36c);
+  box-shadow: 0 0 0 1px var(--wiki-link, #36c);
+}
+
+.auth-gate__input:disabled {
+  color: var(--wiki-text-subtle, #54595d);
+  background: var(--wiki-box-bg-alt, #eaecf0);
+}
+
+.auth-gate__btn {
+  flex: 0 0 auto;
+  min-width: 92px;
+  padding: 7px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #fff;
+  background: var(--wiki-link, #36c);
+  border: 1px solid #2a55aa;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.auth-gate__btn:hover:not(:disabled) {
+  background: #2a55aa;
+}
+
+.auth-gate__btn:disabled {
+  color: #54595d;
+  background: var(--wiki-box-bg-alt, #eaecf0);
+  border-color: var(--wiki-border-faint, #c8ccd1);
+  cursor: default;
+}
+
+.auth-gate__msg {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--wiki-text, #202122);
+}
+
+.auth-gate__msg--err {
+  color: var(--wiki-link-red, #d73333);
+}
+
+.auth-gate__foot {
+  margin: 22px 0 0;
+  padding-top: 12px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--wiki-text-subtle, #54595d);
+  border-top: 1px solid var(--wiki-border-faint, #c8ccd1);
+}

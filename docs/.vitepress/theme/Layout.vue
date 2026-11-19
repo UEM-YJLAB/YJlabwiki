@@ -30,11 +30,37 @@ const route = useRoute()
  */
 import XpDesktop from './winxp/XpDesktop.vue'
 import { STRUCTURAL_THEMES, useWikiTheme } from './themes'
+import AuthGate from './auth/AuthGate.vue'
+import { GATE_ATTR, hasPass } from './auth/gate'
 
 const { theme: currentTheme } = useWikiTheme()
 const mounted = ref(false)
+
+/* ------------------------------------------------------------------ 访问门槛
+ * 站点是纯静态的，没有服务端，所以这道门是前端遮罩：答对问题才放行。
+ *
+ * SSR 阶段读不到 sessionStorage，锁着就是锁着（locked 初值 true）；
+ * 挂载后再看本会话有没有答过。正文在两种情况下都不会闪：
+ * config.mts 的 head 内联脚本在页面绘制前就把 <html data-yjlab-gate> 设好了，
+ * auth-gate.css 据它藏正文 / 藏门。
+ *
+ * 注意：服务端仍然要渲染正文（XP 主题每个窗口是 fetch 那一页的静态 HTML
+ * 再抠 .wiki-body 的），所以这里不能用 v-if 把正文摘掉。
+ */
+const locked = ref(true)
+
+function unlockGate() {
+  locked.value = false
+  try {
+    document.documentElement.setAttribute(GATE_ATTR, 'open')
+  } catch {
+    /* 极端情况下拿不到 documentElement，忽略：遮罩已经卸载了 */
+  }
+}
+
 onMounted(() => {
   mounted.value = true
+  if (hasPass()) unlockGate()
 })
 const useXp = computed(
   () => mounted.value && STRUCTURAL_THEMES.includes(currentTheme.value),
@@ -186,7 +212,9 @@ const loginText = computed<string>(() => cfg.value.login?.text ?? '登录 GitHub
 </script>
 
 <template>
-  <XpDesktop v-if="useXp" />
+  <!-- 没答对题之前只有这一张门，正文被 auth-gate.css 藏掉 -->
+  <AuthGate v-if="locked" @unlocked="unlockGate" />
+  <XpDesktop v-if="useXp && !locked" />
   <template v-else>
     <div class="wiki-page-base" />
     <div class="wiki-shell">

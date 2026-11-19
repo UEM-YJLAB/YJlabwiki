@@ -8,6 +8,8 @@ import './theme-legend.css'
 // WindowsXP 不只是配色：它替换整站结构（Layout.vue 里分支），
 // 结构代码在 winxp/ 目录，这里只引它的样式表。
 import './theme-winxp.css'
+// 访问门槛（开门页）的样式：靠 <html data-yjlab-gate> 藏正文 / 藏遮罩
+import './auth/auth-gate.css'
 
 /**
  * YJlab 维基主题
