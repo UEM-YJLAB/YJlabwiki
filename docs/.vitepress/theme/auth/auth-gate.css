@@ -68,19 +68,13 @@ html[data-yjlab-gate='open'] .auth-gate {
 }
 
 .auth-gate__question {
-  margin: 22px 0 6px;
+  margin: 22px 0 18px;
   padding-bottom: 6px;
   font-family: var(--wiki-serif, Georgia, serif);
   font-size: 21px;
   font-weight: 400;
   line-height: 1.5;
   border-bottom: 1px solid var(--wiki-border-blue, #a7d7f9);
-}
-
-.auth-gate__hint {
-  margin: 0 0 20px;
-  font-size: 13px;
-  color: var(--wiki-text-subtle, #54595d);
 }
 
 .auth-gate__form {
@@ -160,11 +154,3 @@ html[data-yjlab-gate='open'] .auth-gate {
   color: var(--wiki-link-red, #d73333);
 }
 
-.auth-gate__foot {
-  margin: 22px 0 0;
-  padding-top: 12px;
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--wiki-text-subtle, #54595d);
-  border-top: 1px solid var(--wiki-border-faint, #c8ccd1);
-}

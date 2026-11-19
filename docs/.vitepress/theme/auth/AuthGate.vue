@@ -120,7 +120,6 @@ onBeforeUnmount(stopTicker)
       </div>
 
       <h1 class="auth-gate__question">{{ QUESTION }}</h1>
-      <p class="auth-gate__hint">写中文姓名即可。答对后本会话有效，关掉浏览器要重新答。</p>
 
       <form class="auth-gate__form" @submit.prevent="submit">
         <label class="auth-gate__label" for="yjlab-gate-answer">答案</label>
@@ -173,11 +172,6 @@ onBeforeUnmount(stopTicker)
           本站的打开方式需要 JavaScript，请开启后刷新。
         </p>
       </noscript>
-
-      <p class="auth-gate__foot">
-        实验室内部资料，<strong>不是</strong>保险箱：正文本身在静态页面里，这道门只是让顺手点开的人
-        先答个题。请勿往站内写保密内容。
-      </p>
     </div>
   </div>
 </template>
