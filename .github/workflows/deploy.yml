@@ -8,11 +8,9 @@ on:
     branches: [main]
   workflow_dispatch: # 也可以在 Actions 页面手动触发
 
-# GitHub Pages 部署需要的权限
+# 默认只读；发布权限仅授予 deploy 作业。
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # 同一时间只跑一个部署，避免并发互相覆盖
 concurrency:
@@ -22,44 +20,51 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
     steps:
       - name: 拉取代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
         with:
           # 必须完整历史：页脚的「本页面最后修订于」是靠 git 提交时间算的
           fetch-depth: 0
+          persist-credentials: false
 
       - name: 安装 Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7.1.0
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: npm
 
       - name: 安装依赖
         run: npm ci --no-audit --no-fund
 
+      - name: 配置 Pages
+        id: pages
+        uses: actions/configure-pages@v6.0.0
+
       - name: 构建站点
         run: npm run build
         env:
-          # 项目站点跑在 https://brobrush.github.io/YJlabwiki/ 这个子路径下，
-          # 所有链接和资源都要带这个前缀。将来绑定了独立域名就删掉这一行。
-          BASE_PATH: /YJlabwiki/
-
-      - name: 配置 Pages
-        uses: actions/configure-pages@v5
+          # 从 Pages 实际配置取得子路径；迁移组织或绑定域名时无需再手工改路径。
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
 
       - name: 上传构建产物
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: docs/.vitepress/dist
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: 发布
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5.0.1

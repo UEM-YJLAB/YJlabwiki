@@ -20,14 +20,34 @@ import argparse
 import base64
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.error
 import urllib.request
 
-REPO = 'brobrush/YJlabwiki'
+DEFAULT_REPO = 'UEM-YJLAB/YJlabwiki'
+REPO = DEFAULT_REPO
 API = 'https://api.github.com'
-TOKEN = json.load(open(os.path.expanduser('~/.gh-oauth.json')))['access_token']
+TOKEN = None
+
+
+def resolve_token():
+    """使用标准环境变量或已有的 GitHub CLI 登录，不依赖个人凭据文件。"""
+    for name in ('GH_TOKEN', 'GITHUB_TOKEN'):
+        token = os.environ.get(name, '').strip()
+        if token:
+            return token
+    try:
+        result = subprocess.run(
+            ['gh', 'auth', 'token', '--hostname', 'github.com'],
+            capture_output=True, text=True, check=True)
+        token = result.stdout.strip()
+        if token:
+            return token
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass
+    raise RuntimeError('未找到 GitHub 凭据；请先 gh auth login，或设置 GH_TOKEN / GITHUB_TOKEN')
 
 
 def api(method, path, body=None):
@@ -74,11 +94,23 @@ def git(*args):
 
 
 def main():
+    global REPO, TOKEN
     ap = argparse.ArgumentParser()
+    ap.add_argument('--repo', default=os.environ.get('GH_REPO', DEFAULT_REPO),
+                    help='目标仓库 owner/repo（默认 GH_REPO 或 UEM-YJLAB/YJlabwiki）')
     ap.add_argument('--parent', help='远端最新提交（默认自动查询 main）')
     ap.add_argument('--diff-base', required=True, help='本地用于计算改动的基点提交')
     ap.add_argument('--target', default='HEAD', help='要推送的本地提交，默认 HEAD')
     args = ap.parse_args()
+
+    if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', args.repo):
+        ap.error('--repo 必须是 owner/repo 格式')
+    REPO = args.repo
+    try:
+        TOKEN = resolve_token()
+    except RuntimeError as exc:
+        ap.error(str(exc))
+    print('目标仓库    :', REPO)
 
     remote_sha = api('GET', f'/repos/{REPO}/git/ref/heads/main')['object']['sha']
     print('远端 main   :', remote_sha[:7])

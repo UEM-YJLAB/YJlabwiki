@@ -67,5 +67,5 @@ categories:
 
 - [所有页面](/all-pages) —— 站内全部条目一览
 - [关于本站](/about) —— 定位、内容边界与维护者
-- [代码仓库](https://github.com/brobrush/YJlabwiki) —— 本站源文件都在这里，编辑记录也在
+- [代码仓库](https://github.com/UEM-YJLAB/YJlabwiki) —— 本站源文件都在这里，编辑记录也在
 - 实验室主页 —— 待绑定域名后补充

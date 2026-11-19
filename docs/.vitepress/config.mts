@@ -24,15 +24,15 @@ const BASE_PATH = (() => {
 const REPO = {
   label: 'GitHub',
   // 仓库首页
-  home: 'https://github.com/brobrush/YJlabwiki',
+  home: 'https://github.com/UEM-YJLAB/YJlabwiki',
   // 「编辑」标签：打开网页版 Markdown 编辑器，改完 commit，站点自动重建
-  editBase: 'https://github.com/brobrush/YJlabwiki/edit/main/docs/',
+  editBase: 'https://github.com/UEM-YJLAB/YJlabwiki/edit/main/docs/',
   // 「查看历史」标签：该页面的提交记录
-  historyBase: 'https://github.com/brobrush/YJlabwiki/commits/main/docs/',
+  historyBase: 'https://github.com/UEM-YJLAB/YJlabwiki/commits/main/docs/',
   // 「讨论」标签：新建 issue
-  discussBase: 'https://github.com/brobrush/YJlabwiki/issues/new',
+  discussBase: 'https://github.com/UEM-YJLAB/YJlabwiki/issues/new',
   // 侧栏「最近更改」：整个仓库的提交历史
-  recentChanges: 'https://github.com/brobrush/YJlabwiki/commits/main',
+  recentChanges: 'https://github.com/UEM-YJLAB/YJlabwiki/commits/main',
 }
 
 /* 侧栏三大分类。link 用文件路径（不带 .md），text 是显示名。 */
@@ -104,7 +104,7 @@ export default defineConfig({
      * 设成 'locked' 或 'open'。auth-gate.css 靠这个属性藏正文、藏遮罩，
      * 所以既不会先闪一下正文（等于白送），也不会让答过的人再看见一帧门。
      *
-     * 答案的密文与存储键都从 theme/auth/gate.ts 引入，不在这里重复写。
+     * 答案的摘要与存储键都从 theme/auth/gate.ts 引入，不在这里重复写。
      */
     [
       'script',
