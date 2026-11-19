@@ -65,9 +65,9 @@ npm run build    # 产物在 docs/.vitepress/dist/
 
 侧栏的选择器是遍历 `THEMES` 渲染的，不用改。选择存在 `localStorage`；
 `config.mts` 的 `head` 里有一段内联脚本在页面绘制前套用主题，避免刷新时闪一下
-（⚠️ 那段脚本把 `'yjlab-wiki-theme'` 和 `'wiki'` 写死了，改 `STORAGE_KEY` / `DEFAULT_THEME` 时要同步）。
+（那段脚本把 `'yjlab-wiki-theme'` 和 `'wiki'` 写死了，改 `STORAGE_KEY` / `DEFAULT_THEME` 时要同步）。
 
-> **写主题 CSS 时注意**：VitePress 的 `<Content />` 会在正文外包一层 `<div>`，
+> **主题 CSS 的坑**：VitePress 的 `<Content />` 会在正文外包一层 `<div>`，
 > 所以标题必须用 `h1:first-of-type` 而不是 `> h1:first-child` —— 后者永远匹配不到，
 > 标题会退化成黑字无下划线，在深色主题下直接看不见（踩过这个坑）。
 
@@ -105,7 +105,7 @@ npm run build    # 产物在 docs/.vitepress/dist/
 代价是抓来的是静态快照，里面的 Vue 交互组件不活；网页里的链接由
 `XpDesktop.vue` 的事件委托接管，所以点击跳转照常能用。
 
-**⚠️ XP 主题最容易踩的坑：base 前缀。** 这个站部署在 `/YJlabwiki/` 子路径下，
+**XP 主题最容易踩的坑：base 前缀。** 这个站部署在 `/YJlabwiki/` 子路径下，
 而 VitePress 内部是**按长度剥 base** 的：
 
 ```js
@@ -165,19 +165,16 @@ node -e "const c=require('crypto');
 把输出填进 `gate.ts` 的 `DIGEST` 即可。校验时会先做 NFKC + 去首尾空白，
 所以全角/半角、复制粘贴带尾随空格都不影响；**汉字必须精确**，不认拼音。
 
-### ⚠️ 它只是门帘，不是鉴权
+### 边界
 
-- 站点是预渲染的静态站，**每页正文本来就在 `dist/*.html` 里明文**，`curl` 一下、
-  右键看源码、翻公开仓库的 `.md`、或者读 `docs/public/search-index.json`
-  都能绕过这道门。它治的是「随手点进来的人」。
-- 答案空间是实验室名单（几十个词），SHA-256 可被毫秒级字典爆破。这里没有
-  再叠 PBKDF2 迭代 —— 挡不住，只会让每次输入变慢、并让人误以为它安全。
-- 保密内容应另存到组织批准的私有系统。只把源码仓库转私有，不能保证已发布的 Pages 网站也私有；
-  网站访问控制需要服务端认证或支持私有发布的托管方案。
-- `404.html` 不走 `Layout`，所以「页面不存在」那页没有门（里面也没有正经内容）。
+站点是预渲染的静态站，正文本来就在 `dist/*.html` 和公开仓库的 `.md` 里
+（`docs/public/search-index.json` 也是公开的），所以这道门是前端遮罩：
+`curl`、右键看源码都能绕过。答案空间是实验室名单（几十个词），SHA-256 可被
+毫秒级字典爆破，所以没有再叠 PBKDF2 迭代（挡不住，只会让每次输入变慢）。
+`404.html` 不走 `Layout`，所以「页面不存在」那页没有门。
 
-另外注意：Web Crypto 只在 **https 或 localhost** 下可用，所以本地用 `npm run dev`
-（或 `127.0.0.1`）测试；用 `http://192.168.x.x` 打开会提示「这个浏览器算不了哈希」。
+Web Crypto 只在 **https 或 localhost** 下可用：本地用 `npm run dev`（或
+`127.0.0.1`）测试，`http://192.168.x.x` 打开会提示「这个浏览器算不了哈希」。
 
 ## 改代码前必读
 
@@ -192,7 +189,7 @@ node -e "const c=require('crypto');
    `<html data-yjlab-gate="locked|open">`，`auth-gate.css` 据它隐藏 `.wiki-shell`，
    `Layout.vue` 在答对后把属性改成 `open`。删掉内联脚本 → 每次都会先闪一下正文；
    删掉 CSS 那两条规则 → 门在，但正文在门底下可见。
-   也**不要**用 `v-if="locked"` 把 `<Content />` 摘掉：XP 主题每个窗口是 fetch 那一页的
+   也**不能**用 `v-if="locked"` 把 `<Content />` 摘掉：XP 主题每个窗口是 fetch 那一页的
    静态 HTML 再抠 `.wiki-body` 的，正文不在 HTML 里 XP 就全空了。
 
 
@@ -208,8 +205,8 @@ GitHub Pages 自动部署，配置在 [.github/workflows/deploy.yml](.github/wor
 2. 在 **Actions → 部署到 GitHub Pages → Run workflow** 中选择 `main` 运行一次；后续提交自动触发。
 3. 部署成功后访问 https://uem-yjlab.github.io/YJlabwiki/ ，检查页面、样式与编辑链接。
 
-不要选择从 `main` 的 `/docs` 直接发布：那里是 Markdown 和 Vue 源码，直接发布会进入 Jekyll，
-无法生成本站界面。实际发布目录为 `docs/.vitepress/dist/`。
+从 `main` 的 `/docs` 直接发布会走 Jekyll（那里是 Markdown 和 Vue 源码），生不出本站界面；
+实际发布目录是 `docs/.vitepress/dist/`。
 
 工作流从 `actions/configure-pages` 的 `base_path` 输出设置 `BASE_PATH`，自动适配
 `/YJlabwiki/` 子路径或 Pages 自定义域名；本地模拟线上路径时使用 `BASE_PATH=/YJlabwiki/ npm run build`。
@@ -224,7 +221,7 @@ GitHub Pages 自动部署，配置在 [.github/workflows/deploy.yml](.github/wor
 - 默认目标是 `UEM-YJLAB/YJlabwiki`，可用 `--repo owner/repo` 或 `GH_REPO` 显式覆盖。
 - 身份验证依次读取 `GH_TOKEN`、`GITHUB_TOKEN`，或已登录的 GitHub CLI（`gh auth login`）。
 - 需要对组织仓库具有相应写权限；修改工作流时，凭据也需要相应的工作流写权限。
-- 脚本不再读取个人电脑上的 `~/.gh-oauth.json`；不要把令牌写进源码或仓库文档。
+- 脚本不再读取个人电脑上的 `~/.gh-oauth.json`。
 
 ```bash
 python3 scripts/push-via-api.py --diff-base <远端当前提交>
@@ -232,7 +229,7 @@ python3 scripts/push-via-api.py --diff-base <远端当前提交>
 
 两个本地调试的坑：
 
-- `npm run preview` 启动时会缓存文件清单，重新 `build` 后必须重启它，否则页面是无样式的裸 HTML。
+- `npm run preview` 启动时会缓存文件清单，重新 `build` 后需要重启它，否则页面是无样式的裸 HTML。
   日常用 `npm run dev`。
 - `python3 scripts/serve-404-test.py` 模拟真实托管平台的 cleanUrls 与 404 行为
   （`vitepress preview` 在这两点上不准，会让你误判站点有问题）。
@@ -243,6 +240,4 @@ python3 scripts/push-via-api.py --diff-base <远端当前提交>
 - 组织管理员通过团队分配权限：内容编辑者使用 **Write**，日常维护者使用 **Maintain**；
   仓库权限与团队授权由 **Admin** 或组织所有者管理。建议保留至少两位可信管理员。
 - 交接时更新组织成员、团队和仓库维护文档；恢复码、域名等共享维护资料存入组织批准的密码管理器。
-- 本仓库和当前 Pages 站点**对全网公开**，不要写入隐私与保密材料。
-  现在有一道进门答题的门（见上文「访问门槛」），但那只是让顺手点开的人答个题，
-  **不是鉴权**，别把它当保险箱。
+- 本仓库和当前 Pages 站点**对全网公开**。
