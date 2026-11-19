@@ -1,26 +1,41 @@
 # YJlab 维基
 
-应急科技创新实验室的内部维基。外观复刻 Wikipedia Vector (2010) 皮肤，内容为 Markdown，
-构建成纯静态站点，由 GitHub Pages 托管。
+应急科技创新实验室维护的公开维基，仓库归属 **UEM-YJLAB 组织**。
+外观复刻 Wikipedia Vector (2010) 皮肤，内容为 Markdown，构建成纯静态站点，由 GitHub Pages 托管。
 
-- **线上**：https://brobrush.github.io/YJlabwiki/
-- **仓库**：https://github.com/brobrush/YJlabwiki
+- **线上**：https://uem-yjlab.github.io/YJlabwiki/
+- **仓库**：https://github.com/UEM-YJLAB/YJlabwiki
 
 ## 快速开始
 
+使用 Node.js 24（版本约定见 `.node-version`）和随附的 npm。
+
 ```bash
-npm install
+git clone https://github.com/UEM-YJLAB/YJlabwiki.git
+cd YJlabwiki
+npm ci
 npm run dev      # http://localhost:5173
 npm run build    # 产物在 docs/.vitepress/dist/
 ```
 
-> `npm install` 若报 esbuild 错误，执行 `npm install-scripts approve esbuild` 后重装。
+依赖由 `package-lock.json` 固定，首次安装和 CI 都使用 `npm ci`。
+如果本地副本仍指向个人仓库，先执行
+`git remote set-url origin https://github.com/UEM-YJLAB/YJlabwiki.git`，再 `git fetch origin`。
+
+### 依赖维护记录（2026-11-19）
+
+当前 npm 稳定版为 VitePress 1.6.4，2.x 仍为预发布版本，因此本站保留稳定版。
+`npm audit` 仍报告 Vite / esbuild 依赖链的 3 项开发依赖告警（1 项 high、2 项 moderate），
+当前稳定版没有兼容的自动修复。后续升级需验证自定义主题、答题入口和子路径路由。
+告警涉及开发服务器等工具，GitHub Pages 只发布构建出的静态文件。详情见
+[Vite 公告](https://github.com/advisories/GHSA-4w7w-66w2-5vf9)与
+[esbuild 公告](https://github.com/advisories/GHSA-67mh-4wv8-2f99)。
 
 ## 想改内容
 
-**不用看这个 README。** 站内的[编辑指南](https://brobrush.github.io/YJlabwiki/help/)写了怎么写、
+**不用看这个 README。** 站内的[编辑指南](https://uem-yjlab.github.io/YJlabwiki/help/)写了怎么写、
 有哪些语法、页面怎么命名、新增页面要改哪两处。最简单的方式：在页面上点右上角「编辑」，
-直接在浏览器里改 Markdown，提交后约 1 分钟自动上线。
+直接在浏览器里改 Markdown，改动进入 `main` 后自动构建上线。
 
 ## 想改站点本身
 
@@ -34,7 +49,7 @@ npm run build    # 产物在 docs/.vitepress/dist/
 | 404 页 | `docs/.vitepress/theme/NotFound.vue` |
 | 侧栏搜索 | `docs/.vitepress/theme/WikiSearch.vue` |
 | 主题（皮肤） | `docs/.vitepress/theme/themes.ts` 注册，每个主题一个 css |
-| 开门页（访问门槛）的问题与答案密文 | `docs/.vitepress/theme/auth/gate.ts`，见下文「访问门槛」 |
+| 开门页（访问门槛）的问题与答案摘要 | `docs/.vitepress/theme/auth/gate.ts`，见下文「访问门槛」 |
 
 `docs/` 下按栏目分目录：`chronicle/` 世代编年史、`groups/` 组别、`tools/` 工具介绍、
 `help/` 帮助；`public/` 放图片与 favicon；`scripts/` 是构建与调试脚本。
@@ -119,23 +134,23 @@ XP_BASE=/YJlabwiki/ python3 scripts/xp-shot.py <路由> <输出名> [要执行�
 ## 访问门槛（进门先答题）
 
 打开任何页面先看到一张门：「实验室里出现次数最多的人名是谁？」，写中文姓名，
-答对了才显示正文。本会话内有效（关掉浏览器要重新答）。连错 2 次锁 5 分钟。
+答对了才显示正文。放行状态保存在当前标签页的 sessionStorage 中。连错 2 次锁 5 分钟。
 
-代码只有四个文件：
+相关文件：
 
 | 文件 | 作用 |
 | --- | --- |
-| `theme/auth/gate.ts` | 问题、答案的 **SHA-256 密文**、sessionStorage 放行标记、错次/锁定计数 |
+| `theme/auth/gate.ts` | 问题、答案的 **SHA-256 摘要**、sessionStorage 放行标记、错次/锁定计数 |
 | `theme/auth/AuthGate.vue` | 那张门本身（输入框、回车提交、倒计时） |
 | `theme/auth/auth-gate.css` | 门的样式，外加「锁着时藏正文 / 放行后不画门」两条规则 |
 | `Layout.vue` + `config.mts` | 门挂在 Layout 上；`config.mts` 的 `head` 里那段内联脚本在**页面绘制前**判断放行状态 |
 
-存储键：`yjlab-gate-pass`（sessionStorage，值就是密文本身）、
+存储键：`yjlab-gate-pass`（sessionStorage，值就是摘要本身）、
 `yjlab-gate-fail`（localStorage，存错次和锁定到期时间）。
 
 ### 答案放在哪、怎么改
 
-**仓库里只有密文。** `gate.ts` 里的 `DIGEST` 是答案的 SHA-256，答案明文不进代码、
+**仓库里只保存答案摘要。** `gate.ts` 里的 `DIGEST` 是答案的 SHA-256，答案明文不进代码、
 不进注释、不进 README、**不进 commit message 和分支名** —— 那些也都是 git 历史。
 
 要换答案，按下面的命令重新算（把 `答案` 换成真实姓名）：
@@ -157,8 +172,8 @@ node -e "const c=require('crypto');
   都能绕过这道门。它治的是「随手点进来的人」。
 - 答案空间是实验室名单（几十个词），SHA-256 可被毫秒级字典爆破。这里没有
   再叠 PBKDF2 迭代 —— 挡不住，只会让每次输入变慢、并让人误以为它安全。
-- 真要保密，只有三条路：仓库转私有、加后端登录、或用 Cloudflare Access 之类
-  有服务端的方案。
+- 保密内容应另存到组织批准的私有系统。只把源码仓库转私有，不能保证已发布的 Pages 网站也私有；
+  网站访问控制需要服务端认证或支持私有发布的托管方案。
 - `404.html` 不走 `Layout`，所以「页面不存在」那页没有门（里面也没有正经内容）。
 
 另外注意：Web Crypto 只在 **https 或 localhost** 下可用，所以本地用 `npm run dev`
@@ -184,10 +199,36 @@ node -e "const c=require('crypto');
 ## 部署
 
 GitHub Pages 自动部署，配置在 [.github/workflows/deploy.yml](.github/workflows/deploy.yml)：
-push 到 `main` 即触发，约 1 分钟上线。进度看仓库的 Actions 页。
+提交到 `main` 后自动生成搜索索引、构建 VitePress 并发布。进度看
+[Actions](https://github.com/UEM-YJLAB/YJlabwiki/actions)，通常数分钟内完成。
 
-⚠️ 项目站点跑在子路径 `/YJlabwiki/` 下，所以 workflow 里设了 `BASE_PATH=/YJlabwiki/`。
-**将来绑定独立域名时要把这一行删掉**，否则所有链接都会指向错误路径。
+组织仓库的初次配置：
+
+1. 打开 **Settings → Pages → Build and deployment**，将 **Source** 设为 **GitHub Actions**。
+2. 在 **Actions → 部署到 GitHub Pages → Run workflow** 中选择 `main` 运行一次；后续提交自动触发。
+3. 部署成功后访问 https://uem-yjlab.github.io/YJlabwiki/ ，检查页面、样式与编辑链接。
+
+不要选择从 `main` 的 `/docs` 直接发布：那里是 Markdown 和 Vue 源码，直接发布会进入 Jekyll，
+无法生成本站界面。实际发布目录为 `docs/.vitepress/dist/`。
+
+工作流从 `actions/configure-pages` 的 `base_path` 输出设置 `BASE_PATH`，自动适配
+`/YJlabwiki/` 子路径或 Pages 自定义域名；本地模拟线上路径时使用 `BASE_PATH=/YJlabwiki/ npm run build`。
+
+部署使用 GitHub 自动提供的 `GITHUB_TOKEN` 和 OIDC，无需个人访问令牌。
+组织的 Actions 策略需要允许本工作流使用的官方 `actions/*` 操作。
+
+### API 推送备用脚本
+
+正常协作使用 `git push`。仅在 Git 传输不可用时使用 `scripts/push-via-api.py`：
+
+- 默认目标是 `UEM-YJLAB/YJlabwiki`，可用 `--repo owner/repo` 或 `GH_REPO` 显式覆盖。
+- 身份验证依次读取 `GH_TOKEN`、`GITHUB_TOKEN`，或已登录的 GitHub CLI（`gh auth login`）。
+- 需要对组织仓库具有相应写权限；修改工作流时，凭据也需要相应的工作流写权限。
+- 脚本不再读取个人电脑上的 `~/.gh-oauth.json`；不要把令牌写进源码或仓库文档。
+
+```bash
+python3 scripts/push-via-api.py --diff-base <远端当前提交>
+```
 
 两个本地调试的坑：
 
@@ -198,8 +239,10 @@ push 到 `main` 即触发，约 1 分钟上线。进度看仓库的 Actions 页�
 
 ## 交接
 
-- 用**实验室公共账号**管仓库，不要挂在个人账号上
-- 仓库至少留 2 个管理员，凭据存进组内共享的密码库
-- 站点内容**对全网公开** —— GitHub Pages 免费版无法加登录，不要往里写隐私与保密材料。
+- 仓库由 **UEM-YJLAB 组织**持有，成员用各自的 GitHub 账号协作，不共用个人登录凭据。
+- 组织管理员通过团队分配权限：内容编辑者使用 **Write**，日常维护者使用 **Maintain**；
+  仓库权限与团队授权由 **Admin** 或组织所有者管理。建议保留至少两位可信管理员。
+- 交接时更新组织成员、团队和仓库维护文档；恢复码、域名等共享维护资料存入组织批准的密码管理器。
+- 本仓库和当前 Pages 站点**对全网公开**，不要写入隐私与保密材料。
   现在有一道进门答题的门（见上文「访问门槛」），但那只是让顺手点开的人答个题，
   **不是鉴权**，别把它当保险箱。

@@ -2,10 +2,11 @@
 #
 # 作用：给不熟悉 Markdown / Git 的组员一个表单式的编辑后台。
 # 用法（一次性设置，约 3 分钟）：
-#   1. 把本仓库推到 GitHub
-#   2. 用仓库管理员账号登录 https://app.pagescms.org
-#   3. 选择本仓库并授权 GitHub App
-#   4. 之后打开 app.pagescms.org 就能看到「世代编年史 / 组别」两个栏目，直接填写保存
+#   1. 由 UEM-YJLAB 组织所有者批准 Pages CMS GitHub App 访问本仓库
+#   2. 成员用各自的 GitHub 账号登录 https://app.pagescms.org
+#   3. 选择 UEM-YJLAB/YJlabwiki（需要对应仓库写权限）
+#   4. 选择「世代编年史 / 组别 / 帮助页面」填写保存
+# 配置文件不会自动安装或授权 GitHub App；这是一个可选的编辑方式。
 #
 # 保存即提交，站点会自动重建。无需任何服务器。
 
