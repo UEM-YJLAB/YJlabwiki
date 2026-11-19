@@ -14,12 +14,15 @@ categories:
 
 | 身份 | 权限 | 获取方式 |
 | --- | --- | --- |
-| 浏览者 | 阅读、搜索 | 无需任何操作 |
-| 编辑者 | 新建与修改任意页面 | 由管理员把仓库写权限授予其账号 |
-| 管理员 | 编辑 + 改站点配置 + 加人 | 现有的管理员在仓库设置里添加 |
+| 浏览者 | 阅读、搜索 | 通过站内答题入口，无需 GitHub 账号 |
+| 编辑者 | 新建与修改任意页面 | 加入组织编辑团队并取得仓库 Write 权限，或由管理员单独授权 |
+| 维护者 | 编辑内容、维护站点和工作流 | 由管理员授予仓库 Maintain 权限 |
+| 管理员 | 管理仓库配置、团队和协作者权限 | 组织所有者或仓库 Admin |
 
 ::: ambox 权限即账号
-本站是静态站点，没有独立的注册系统。"管理员账号"就是**代码仓库上的账号**。想加人，去仓库的 Settings → Collaborators 里添加即可。
+本站由 **UEM-YJLAB 组织**管理。每位成员使用自己的 GitHub 账号；加入组织不一定自动获得仓库写权限。
+管理员可在仓库的 **Settings → Collaborators and teams** 中授权团队或协作者。
+进门答题只影响浏览界面，不授予 GitHub 编辑权限。
 :::
 
 ## 三种编辑方式
@@ -29,23 +32,30 @@ categories:
 1. 打开任意页面
 2. 点右上角的「**编辑**」标签
 3. 在网页编辑器里直接改 Markdown 文本，可以用「Preview」标签预览
-4. 在页面底部写一句改动说明，点 **Commit changes**
-5. 约一分钟后站点自动重建，改动生效
+4. 写一句改动说明，点 **Commit changes**；按仓库要求直接提交或创建 Pull Request
+5. 改动进入 `main` 后，组织仓库的 GitHub Actions 自动重建，通常数分钟内生效
 
 这是最接近维基百科体验的方式，**不需要装任何软件**。
 
 ### 方式二：图形化后台（不熟悉 Markdown 时用）
 
-仓库里带有 `.pages.yml` 配置，用 [Pages CMS](https://pagescms.org/) 登录后可以获得表单式的编辑界面：左边选页面，右边填写标题、分类和正文，保存即提交。
+仓库里带有 `.pages.yml` 配置。组织所有者先批准 [Pages CMS](https://pagescms.org/) 访问本组织仓库后，
+成员才可以使用表单式编辑界面：左边选页面，右边填写标题、分类和正文，保存即提交。
+配置文件本身不代表组织已授权或启用了这个可选服务。
 
 ### 方式三：本地编辑（大批量修改时用）
 
 ```bash
-npm install
+git clone https://github.com/UEM-YJLAB/YJlabwiki.git
+cd YJlabwiki
+npm ci          # 使用 Node.js 24，版本见 .node-version
 npm run dev      # 打开 http://localhost:5173 实时预览
 # 改完后
 git add -A && git commit -m "更新第三世代人员" && git push
 ```
+
+旧的本地副本需要先把远端改为组织仓库：
+`git remote set-url origin https://github.com/UEM-YJLAB/YJlabwiki.git`。
 
 ## 一次编辑的完整流程
 
@@ -145,6 +155,10 @@ git add -A && git commit -m "更新第三世代人员" && git push
 :::
 
 ## 常见问题
+
+**改完没有上线？**
+先到 [组织仓库的 Actions](https://github.com/UEM-YJLAB/YJlabwiki/actions) 查看「部署到 GitHub Pages」。
+管理员需将 Settings → Pages 的 Source 设为 **GitHub Actions**，而不是直接从 `/docs` 发布。
 
 **改错了怎么办？**
 不用担心。每次提交都有完整记录，管理员可以在仓库的提交历史里一键回退，也可以点页面的「查看历史」标签找到旧版本。
